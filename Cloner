@@ -1,0 +1,72 @@
+local Players = game:GetService("Players")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local RunService = game:GetService("RunService")
+local player = Players.LocalPlayer
+local pGui = player:WaitForChild("PlayerGui")
+
+-- 1. Create GUI Container
+local sg = Instance.new("ScreenGui")
+sg.Name = "QuantumSwapGui"
+sg.Parent = pGui
+sg.ResetOnSpawn = false
+sg.DisplayOrder = 1000 
+
+-- 2. Create the Button (Clean Style)
+local btn = Instance.new("TextButton")
+btn.Name = "AutoSwapBtn"
+btn.Parent = sg
+btn.AnchorPoint = Vector2.new(0.5, 0.5)
+btn.Position = UDim2.new(0.91, 0, 0.18, 0) 
+btn.Size = UDim2.new(0, 85, 0, 32)
+btn.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+btn.TextColor3 = Color3.fromRGB(245, 245, 245)
+btn.Text = "Cloner"
+btn.Font = Enum.Font.SourceSansBold 
+btn.TextSize = 18 
+btn.TextStrokeTransparency = 1 
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 10)
+corner.Parent = btn
+
+local stroke = Instance.new("UIStroke")
+stroke.Color = Color3.fromRGB(255, 255, 255)
+stroke.Thickness = 1.5 
+stroke.Parent = btn
+
+-- 3. Stabilized Swap Logic
+local isSwapping = false -- Prevent script from overlapping itself
+
+local function DoInstantSwap()
+    if isSwapping then return end -- If already running, don't start again
+    isSwapping = true
+    
+    local char = player.Character
+    if not char then isSwapping = false return end
+    
+    local tool = player.Backpack:FindFirstChild("Quantum Cloner") or char:FindFirstChild("Quantum Cloner")
+    
+    if tool then
+        char.Humanoid:EquipTool(tool)
+        task.wait(0.05) -- Slightly longer wait to prevent kick
+        
+        local x = workspace.CurrentCamera.ViewportSize.X
+        local y = workspace.CurrentCamera.ViewportSize.Y
+
+        -- Click 1: Trigger Menu
+        VirtualInputManager:SendMouseButtonEvent(x/2, y/2, 0, true, game, 1)
+        task.wait(0.02) -- Realistic delay between down and up
+        VirtualInputManager:SendMouseButtonEvent(x/2, y/2, 0, false, game, 1)
+        
+        -- Click 2: Change with Clone
+        task.wait(0.1) -- Increased delay to satisfy anti-cheat
+        VirtualInputManager:SendMouseButtonEvent(x * 0.54, y * 0.72, 0, true, game, 1)
+        task.wait(0.02)
+        VirtualInputManager:SendMouseButtonEvent(x * 0.54, y * 0.72, 0, false, game, 1)
+    end
+    
+    task.wait(0.2) -- Cooling period before next click is allowed
+    isSwapping = false
+end
+
+btn.MouseButton1Click:Connect(DoInstantSwap)
